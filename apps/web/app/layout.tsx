@@ -1,4 +1,7 @@
 import SocketProvider from "./context/socket.context";
+import RoomContextProvider from "./context/room.context";
+import UsernameContextProvider from "./context/username.context";
+
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -26,7 +29,11 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <SocketProvider>
-          {children}
+          <RoomContextProvider>
+            <UsernameContextProvider>
+              {children}
+            </UsernameContextProvider>
+          </RoomContextProvider>
         </SocketProvider>
       </body>
     </html>

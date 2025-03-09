@@ -23,14 +23,27 @@ ws.on("connection" , (ws) => {
             }))
         }
         else if(event.type == "join-room"){
-            console.log("join room request")
-            if(rooms.get(event.roomid)) {
-                rooms.set(event.roomid , [ws])
+            const existingroom = rooms.get(event.roomid)
+            if(existingroom) {
+                existingroom.push(ws)
                 ws.send(JSON.stringify({
                     type: event.type,
                     result: "success",
                     roomid: `${event.roomid}`
                 }))
+            }
+        }
+        else if(event.type == "send-message"){
+            const message = event.message
+            // brodcast the message to the whole room
+            const room = rooms.get(event.roomid)
+            if(room){
+                room.forEach((conn) => {
+                    conn.send(JSON.stringify({
+                        type: "receive-message",
+                        message
+                    }))
+                })
             }
         }
     })
