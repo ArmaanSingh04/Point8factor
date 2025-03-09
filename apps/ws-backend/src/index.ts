@@ -1,20 +1,37 @@
-import { WebSocketServer } from "ws";
-import express from "express"
+import WebSocket , { WebSocketServer } from "ws";
+import { generateRandomWord } from "./utils";
 
-const app = express()
+const ws = new WebSocketServer({ port: 8000 })
 
-const httpServer = app.listen(8000, () => {
-    console.log(`Websocket express server ready`)
+const rooms = new Map<string , WebSocket[]>()
+
+ws.on("listening" , () => {
+    console.log(`Websocket server ready at port 8000`)
 })
 
-const ws = new WebSocketServer({ server: httpServer })
-
-ws.on("connection" , function connection(ws){
-
-    ws.on("message" , function message(data){
-        console.log(`Received ${data}`)
+ws.on("connection" , (ws) => {
+    ws.on("message" , (data) => {
+        const event = JSON.parse(data.toString()) 
+        
+        if(event.type == "create-room"){
+            const roomid = generateRandomWord()
+            rooms.set(roomid , [ws])
+            ws.send(JSON.stringify({
+                type: event.type,
+                result: "success",
+                roomid: `${roomid}`
+            }))
+        }
+        else if(event.type == "join-room"){
+            console.log("join room request")
+            if(rooms.get(event.roomid)) {
+                rooms.set(event.roomid , [ws])
+                ws.send(JSON.stringify({
+                    type: event.type,
+                    result: "success",
+                    roomid: `${event.roomid}`
+                }))
+            }
+        }
     })
-
-    ws.send("You are connected to the websocker server")
-
 })
