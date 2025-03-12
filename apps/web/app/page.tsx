@@ -41,7 +41,8 @@ export default function Home() {
   const createRoom = () => {
     if(socketConnection){
       socketConnection.send(JSON.stringify({
-        type: "create-room"
+        type: "create-room",
+        username: username
       }))
     }
   }
@@ -50,7 +51,8 @@ export default function Home() {
     if(socketConnection){
       socketConnection.send(JSON.stringify({
         type: "join-room",
-        roomid: inputId
+        roomid: inputId,
+        username: username
       }))
     }
   }
