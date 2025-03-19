@@ -1,9 +1,10 @@
 import WebSocket , { WebSocketServer } from "ws";
 import { generateRandomWord } from "./utils";
+import { gameHandler, StartGame } from "./game";
+import { rooms } from "./state";
 
 const ws = new WebSocketServer({ port: 8000 })
 
-const rooms = new Map<string , WebSocket[]>()
 const players = new Map<string , { username: string }[]>()
 
 ws.on("listening" , () => {
@@ -14,6 +15,9 @@ ws.on("connection" , (ws) => {
     ws.on("message" , (data) => {
         const event = JSON.parse(data.toString()) 
         
+        StartGame(ws , event)
+        gameHandler(ws , event)
+
         if(event.type == "create-room"){
             const roomid = generateRandomWord()
             rooms.set(roomid , [ws])
@@ -56,7 +60,6 @@ ws.on("connection" , (ws) => {
                 result: "success",
                 players: existingPlayers
             }))
-            console.log(existingPlayers , 'hit')
         }
         else if(event.type == "send-message"){
             const message = event.message
