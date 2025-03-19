@@ -1,6 +1,6 @@
 import WebSocket , { WebSocketServer } from "ws";
 import { generateRandomWord } from "./utils";
-import { gameHandler, StartGame } from "./game";
+import { gameHandler, getTurn, StartGame } from "./game";
 import { rooms } from "./state";
 
 const ws = new WebSocketServer({ port: 8000 })
@@ -17,6 +17,7 @@ ws.on("connection" , (ws) => {
         
         StartGame(ws , event)
         gameHandler(ws , event)
+        getTurn(ws , event)
 
         if(event.type == "create-room"){
             const roomid = generateRandomWord()

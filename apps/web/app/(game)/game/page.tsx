@@ -10,12 +10,16 @@ export default function Game() {
     const { roomid } = useContext(RoomContext)
     const {socketConnection} = useContext(socketContext)
     const [players , setPlayers] = useState<{username: string}[]>([])
-    
+    const [turn , setTurn] = useState<boolean>(false)
 
     useEffect(() => {
         if(socketConnection){
             socketConnection.send(JSON.stringify({
                 type: "get-room-players",
+                roomid: roomid
+            }))
+            socketConnection.send(JSON.stringify({
+                type: "get-turn",
                 roomid: roomid
             }))
             socketConnection.onmessage = (message) => {
@@ -24,12 +28,49 @@ export default function Game() {
                 if(response.type == "get-room-players"){
                     setPlayers(response.players)
                 }
+                else if (response.type == "whos-turn"){
+                    if(response.result == "your-turn"){
+                        console.log('setting turn to true' , response)
+                        setTurn(true)
+                    }
+                    else if (response.result == "not-your-turn"){
+                        console.log('setting turn to false' , response)
+                        setTurn(false)
+                    }
+                }
             }
+
         }
 
         
     }, [])
+    const guessHandler = (e: any) =>{
+        if(socketConnection){
+            const inputbox = document.getElementById('guess-input') as HTMLInputElement
+            socketConnection.send(JSON.stringify({
+                type: "player-guess",
+                roomid: roomid,
+                guess: Number(inputbox.value)
+            }))
+
+            socketConnection.send(JSON.stringify({
+                type: "get-turn",
+                roomid: roomid
+            }))
+        }
+    }
     return (
-        <div>{players.map((player , index) => <div key={index}>{player.username}</div>)}</div>
+        <section>
+            <div>
+                {players.map((player , index) => <div key={index}>{player.username}</div>)}
+            </div>
+
+            {turn && 
+                <div>
+                    <input placeholder="Enter your guess" type="number" id="guess-input"/>  
+                    <button onClick={(e) => guessHandler(e)}>Submit guess</button>
+                </div>
+            }
+        </section>
     )
 }
