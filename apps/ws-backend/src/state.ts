@@ -5,13 +5,15 @@ export interface Player {
     username?: string,
     guess: number,
     score: number,
-    conn: WebSocket
+    conn: WebSocket,
+    eliminated: boolean
 }
 export interface RoomStats {
     round: number,
     members: number,
     currentTurn: number,
-    players: Player[]
+    players: Player[],
+    eliminatedPlayers: number
 }
 
 export const rooms = new Map<string , WebSocket[]>()

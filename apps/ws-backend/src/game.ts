@@ -22,7 +22,8 @@ export function StartGame(ws: WebSocket, event: any) {
                 id: index,
                 guess: 0,
                 score: 0,
-                conn: conn
+                conn: conn,
+                eliminated: false
             }))
 
 
@@ -30,7 +31,8 @@ export function StartGame(ws: WebSocket, event: any) {
                 round: 0,
                 currentTurn: 0,
                 members: arr.length,
-                players: arr
+                players: arr,
+                eliminatedPlayers: 0
             }
             // setting the room state
             gameState.set(event.roomid, roomStats)
@@ -43,10 +45,6 @@ export function StartGame(ws: WebSocket, event: any) {
             }))
         }
     }
-}
-
-function announceTurn(){
-
 }
 
 export function getTurn(ws: WebSocket, event: any) {
@@ -75,17 +73,75 @@ export function getTurn(ws: WebSocket, event: any) {
 
 function changeTurn(ws: WebSocket, lastPlayerId: number, room: RoomStats) {
 
-    if (lastPlayerId == room.members - 1) {
+    if (lastPlayerId == room.members-1) {
         // last player change the round and calculate the scores
         room.round += 1;
         room.currentTurn = 0;
 
+        let average = 0;
+        room.players.forEach((player) => {
+            average += player.guess;
+        })
+        average = average / room.members
+        const goal = average * 0.8;
+
+        let roundWinnerIndex: number | null  = null;
+        let lowest = Infinity;
+        // update the winner score
+        room.players.forEach((player) => {
+            const diff = Math.abs(goal - player.guess)
+            if(diff < lowest){
+                lowest = diff;
+                roundWinnerIndex = player.id
+            }
+        })
+
+        // announce everyone that round has changed
+        room.players.forEach((player) => {
+            if(player.id == roundWinnerIndex){
+                player.conn.send(JSON.stringify({
+                    type: "round-change",
+                    result: "winner"
+                }))
+            }
+            else{
+                player.score = player.score + 1;
+
+                // check for player elimination
+                if(player.score == room.members){
+                    // player is eliminated
+                    player.eliminated = true
+                    room.eliminatedPlayers += 1;
+                    // check for game over or not
+                    player.conn.send(JSON.stringify({
+                        type: "player-eliminated",
+                        result: "success"
+                    }))
+                    if(room.eliminatedPlayers == room.members-1){
+                        // game over announce the winner
+                        player.conn.send(JSON.stringify({
+                            type: "game-over",
+                            result: "success"
+                        }))
+                    }
+                }
+                player.conn.send(JSON.stringify({
+                    type: "round-change",
+                    result: "not-a-winner"
+                }))
+            }
+        })
+
+        // announce everyone that round has changed
+        console.log("round has changed result " , goal,   room)
+        // round over will appear when all the players are eliminated
+
+        
     }
     else {
         // player is not the last player
         room.currentTurn += 1;
     }
-    // annouce everyone whos turn is now
     room.players.forEach((player) => {
         if(player.id == room.currentTurn){
             player.conn.send(JSON.stringify({
@@ -116,8 +172,6 @@ export function gameHandler(ws: WebSocket, event: any) {
                     changeTurn(ws, player.id, existingRoom)
                 }
             })
-
-            console.log(existingRoom)
         }
     }
 }
