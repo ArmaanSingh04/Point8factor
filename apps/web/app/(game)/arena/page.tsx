@@ -13,7 +13,7 @@ export default function Arena() {
 
     const [message , setmessage] = useState("")
     const [chats , setChats] = useState<string[]>([])
-    const [players , setPlayers] = useState<{username: string}[]>([])
+    const [players , setPlayers] = useState<{username: string , host: boolean}[]>([])
     console.log(players)
     useEffect(() => {
         if(!socketConnection){
@@ -30,11 +30,10 @@ export default function Arena() {
                 setChats((prev) => [...prev , response.message])
             }
             else if(response.type == "get-room-players"){
-                console.log("response encountered")
                 setPlayers(response.players)
             }
             else if(response.type == "player-joined"){
-                setPlayers((prev) => [...prev , { username: response.username }])
+                setPlayers((prev) => [...prev , { username: response.username , host: response.host}])
             }
             else if(response.type == "game-has-begin"){
                 router.push('/game')
@@ -70,7 +69,13 @@ export default function Arena() {
             <button onClick={sendMesage}>Send message</button>
             {players.map((player,index) => <div key={index}>{player.username}</div>)}
             <h1>YOUR ROOM CHATS</h1>
-            <button onClick={startGame}>Start Game</button>
+            {
+                players.map((player , index) => {
+                    if(player.host && player.username == username){
+                        return <button key={index} onClick={startGame}>Start Game</button>
+                    }
+                })
+            }
             {chats.map((chat , index) =>  <div key={index}>{chat}</div>)}
         </div>
     )
