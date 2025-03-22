@@ -19,6 +19,7 @@ export default function Game() {
     const [ winner , setWinner ] = useState<boolean>(false)
     const [roundOver , setRoundOver] = useState<boolean>(false)
 
+    console.log('setting turn to ' , turn)
     useEffect(() => {
         if(socketConnection){
             socketConnection.send(JSON.stringify({
@@ -27,7 +28,8 @@ export default function Game() {
             }))
             socketConnection.send(JSON.stringify({
                 type: "get-turn",
-                roomid: roomid
+                roomid: roomid,
+                username: username
             }))
             socketConnection.onmessage = (message) => {
                 const response = JSON.parse(message.data);
@@ -35,29 +37,42 @@ export default function Game() {
                 if(response.type == "get-room-players"){
                     setPlayers(response.players)
                 }
-                else if (response.type == "whos-turn"){
-                    console.log(response)
-                    if(response.result == "your-turn"){
-                        console.log('setting turn to true');
-                        setTurn(true)
-                    }
-                    else if (response.result == "not-your-turn"){
-                        console.log('setting turn to false')
-                        setTurn(false)
-                    }
-                }
+                // else if (response.type == "whos-turn"){
+                //     console.log(response)
+                //     if(response.result == "your-turn"){
+                //         console.log('setting turn to true');
+                //         setTurn(true)
+                //     }
+                //     else if (response.result == "not-your-turn"){
+                //         console.log('setting turn to false')
+                //         setTurn(false)
+                //     }
+                // }
                 else if(response.type == "round-change"){
-                    setRoundOver(true)
-                    if(response.result == "winner"){
-                        setWinner(true)
-                    }
-                    else if(response.result == "not-a-winner"){
-                        setWinner(false)
-                    }
-                    setTimeout(() => {
-                        setRoundOver(false)
-                        setWinner(false)
-                    }, 3000);
+                    // setRoundOver(true)
+                    // if(response.result == "winner"){
+                    //     setWinner(true)
+                    // }
+                    // else if(response.result == "not-a-winner"){
+                    //     setWinner(false)
+                    // }
+                    // setTimeout(() => {
+                    //     setRoundOver(false)
+                    //     setWinner(false)
+                    // }, 3000);
+                    socketConnection.send(JSON.stringify({
+                        type: "get-turn",
+                        roomid: roomid,
+                        username: username
+                    }))
+                }
+                else if(response.type == "player-guess" && response.result == "success"){
+                    console.log('setting turn' , false)
+                    setTurn(false)
+                }
+                else if(response.type == "get-turn"){
+                    console.log('getting turn' , response.result)
+                    setTurn(response.result)
                 }
             }
 
@@ -70,13 +85,15 @@ export default function Game() {
             socketConnection.send(JSON.stringify({
                 type: "player-guess",
                 roomid: roomid,
-                guess: Number(inputbox.value)
+                guess: Number(inputbox.value),
+                username: username
             }))
 
-            socketConnection.send(JSON.stringify({
-                type: "get-turn",
-                roomid: roomid
-            }))
+            // socketConnection.send(JSON.stringify({
+            //     type: "get-turn",
+            //     roomid: roomid,
+            //     username: username
+            // }))
         }
     }
     return (

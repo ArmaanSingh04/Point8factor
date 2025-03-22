@@ -14,20 +14,20 @@ export const startGameHandler = (ws: WebSocket, event: any) => {
                 score: 0,
                 conn: player.conn,
                 username: player.username,
-                eliminated: false
+                eliminated: false,
+                turn: true
             }))
 
             const roomStats: RoomStats = {
                 round: 0,
-                currentTurn: 0,
                 members: arr.length,
                 players: arr,
-                eliminatedPlayers: 0
+                eliminatedPlayers: []
             }
 
             gameState.set(event.roomid , roomStats)
 
-            console.log(gameState.get(event.roomid))
+            // console.log(gameState.get(event.roomid))
 
             // announce everyone game has started
             existingRoom.forEach((player) => {

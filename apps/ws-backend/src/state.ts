@@ -6,14 +6,14 @@ export interface Player {
     guess: number,
     score: number,
     conn: WebSocket,
-    eliminated: boolean
+    eliminated: boolean,
+    turn: boolean
 }
 export interface RoomStats {
     round: number,
     members: number,
-    currentTurn: number,
     players: Player[],
-    eliminatedPlayers: number
+    eliminatedPlayers: Player[]
 }
 
 export interface InitialRoomState {
