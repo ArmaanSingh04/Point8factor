@@ -4,22 +4,26 @@ import { useContext, useEffect, useState } from "react"
 import { UsernameContext } from "../../context/username.context"
 import { RoomContext } from "../../context/room.context"
 import { socketContext } from "../../context/socket.context"
+import { useRouter } from "next/navigation"
 
 // interface playerState {
 //     roundresult: boolean
 // }
 
 export default function Game() {
+    console.log('re render')
     const { username } = useContext(UsernameContext)
     const { roomid } = useContext(RoomContext)
     const { socketConnection } = useContext(socketContext)
     const [ players , setPlayers ] = useState<{username: string}[]>([])
+    const router = useRouter()
 
     const [ turn , setTurn ] = useState<boolean>(false)
-    const [ winner , setWinner ] = useState<boolean>(false)
-    const [roundOver , setRoundOver] = useState<boolean>(false)
+    const [ roundWinner , setRoundWinner ] = useState<string>()
+    const [roundChange , setRoundChange] = useState<boolean>(false)
+    const [winner , setwinner] = useState<string>()
+    const [gameover , setGameOver] = useState<boolean>(false)
 
-    console.log('setting turn to ' , turn)
     useEffect(() => {
         if(socketConnection){
             socketConnection.send(JSON.stringify({
@@ -60,18 +64,39 @@ export default function Game() {
                     //     setRoundOver(false)
                     //     setWinner(false)
                     // }, 3000);
+                    setRoundChange(true);
                     socketConnection.send(JSON.stringify({
                         type: "get-turn",
                         roomid: roomid,
                         username: username
                     }))
+
+                    setTimeout(() => {
+                        setRoundChange(false)
+                    }, 3000);
+
+                }
+                else if(response.type == "round-winner" && response.result == "success"){
+                    setRoundWinner(response.username)
+                }
+                else if(response.type == "game-over" && response.result == "success"){
+                    setGameOver(true)
+                    setwinner(response.winner)
+                    setTimeout(() => {
+                        // cleanup function after gameover
+                        socketConnection.close();
+                        router.push("/")
+                        setGameOver(false)
+
+                    }, 5000);
+                }
+                else if(response.type == "player-eliminated" && response.result == "success"){
+                    console.log('player eliminated' , response.username)
                 }
                 else if(response.type == "player-guess" && response.result == "success"){
-                    console.log('setting turn' , false)
                     setTurn(false)
                 }
                 else if(response.type == "get-turn"){
-                    console.log('getting turn' , response.result)
                     setTurn(response.result)
                 }
             }
@@ -96,6 +121,25 @@ export default function Game() {
             // }))
         }
     }
+
+    if(gameover){
+        return(
+            <div>
+                Game over 
+                <h1>{winner} has won the game</h1>
+            </div>
+        )
+    }
+
+    if(roundChange === true){
+        return(
+            <div>
+                <p>Round is getting changed</p>
+                <p>{roundWinner} has won the round</p>
+            </div>
+
+        )
+    }
     return (
         <section>
             <div>
@@ -108,7 +152,6 @@ export default function Game() {
                     <button onClick={(e) => guessHandler(e)}>Submit guess</button>
                 </div>
             }
-            {roundOver && <div>{winner? "You have won the game" : "Lost this round"}</div>}
         </section>
     )
 }

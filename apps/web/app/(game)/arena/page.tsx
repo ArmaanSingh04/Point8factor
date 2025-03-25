@@ -68,7 +68,6 @@ export default function Arena() {
             <input type="text" onChange={(e) => setmessage(e.target.value)} value={message}/>
             <button onClick={sendMesage}>Send message</button>
             {players.map((player,index) => <div key={index}>{player.username}</div>)}
-            <h1>YOUR ROOM CHATS</h1>
             {
                 players.map((player , index) => {
                     if(player.host && player.username == username){
@@ -76,7 +75,6 @@ export default function Arena() {
                     }
                 })
             }
-            {chats.map((chat , index) =>  <div key={index}>{chat}</div>)}
         </div>
     )
 }

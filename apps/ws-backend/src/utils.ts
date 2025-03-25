@@ -9,7 +9,7 @@ export const everyoneGuessed = (roomid: string): boolean => {
     const existingRoom = gameState.get(roomid)
 
     if(existingRoom){
-        console.log(existingRoom.players)
+        //console.log(existingRoom.players)
 
         for (let i = 0; i < existingRoom.players.length; i++) {
             if (existingRoom.players[i]?.turn === true) {
@@ -45,21 +45,27 @@ const calculateScore = (roomid: string) => {
 
         })
 
-        let winner:Player;
-        existingRoom.players.forEach((player) => {
-            if(player.id == winnerIndex){
-                player.score += 1;
-                winner = player;
-            }
-        })
+        const winner = existingRoom.players.find(player => player.id === winnerIndex) || null;
         // announce he is the winner
-        existingRoom.players.forEach((player) => {
-            player.conn.send(JSON.stringify({
-                type: "winner",
-                result: "success",
-                username: winner.username
-            }))
-        })
+
+        if(winner){
+            // player score
+            existingRoom.players.forEach((player) => {
+                // increase the score who did not win the round
+                if(player.id != winner.id){
+                    player.score += 1;
+                }
+            })
+            console.log('round-winner' , winner.username)
+            existingRoom.players.forEach((player) => {
+                player.conn.send(JSON.stringify({
+                    type: "round-winner",
+                    result: "success",
+                    username: winner.username
+                }))
+            })
+        }
+        
 
 
     }
@@ -70,10 +76,11 @@ const checkElimination = (roomid: string) => {
 
     if(existingRoom) {
         existingRoom.players.forEach((player) => {
-            if(player.score == existingRoom.members + 1){
+            if(player.score == existingRoom.members ){
                 // player is eliminated
                 player.eliminated = true;
                 // announce everyone that this player is eliminated
+                console.log("player eliminated" , player.username)
                 existingRoom.players.forEach((temp) => {
                     temp.conn.send(JSON.stringify({
                         type: "player-eliminated",
@@ -86,6 +93,27 @@ const checkElimination = (roomid: string) => {
     }
 }
 
+export const checkGameOver = (roomid: string): boolean => {
+    const existingRoom = gameState.get(roomid)
+
+    // if there are at least 2 players 
+    if(existingRoom){
+        let countNotEliminated = 0
+        existingRoom.players.forEach((player) => {
+            if(!player.eliminated){
+                countNotEliminated += 1;
+            }
+        })
+        if(countNotEliminated < 2){
+            // game is over announce the winner
+            console.log('game over')
+            return true;
+        }
+    }
+
+    return false;
+}
+
 export const changeRound = (roomid: string) => {
     const existingRoom = gameState.get(roomid)
 
@@ -93,6 +121,23 @@ export const changeRound = (roomid: string) => {
     if(existingRoom){
         calculateScore(roomid)
         checkElimination(roomid)
+
+        if(checkGameOver(roomid) === true){
+            
+            const winner = existingRoom.players.find((player) => player.eliminated == false)
+            if(winner){
+                existingRoom.players.forEach((player) => {
+                    player.turn = false
+                    player.conn.send(JSON.stringify({
+                        type: "game-over",
+                        result: "success",
+                        winner: winner.username
+                    }))
+                })
+            }
+            
+            return
+        }
         // change the turn
         existingRoom.players.forEach((player) => {
             // calculate the score and check for elimination
