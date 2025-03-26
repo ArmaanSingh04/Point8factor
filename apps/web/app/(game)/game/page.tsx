@@ -5,6 +5,7 @@ import { UsernameContext } from "../../context/username.context"
 import { RoomContext } from "../../context/room.context"
 import { socketContext } from "../../context/socket.context"
 import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
 
 // interface playerState {
 //     roundresult: boolean
@@ -23,6 +24,7 @@ export default function Game() {
     const [roundChange , setRoundChange] = useState<boolean>(false)
     const [winner , setwinner] = useState<string>()
     const [gameover , setGameOver] = useState<boolean>(false)
+    const [playerGuess , setPlayerGuess] = useState<number>()
 
     useEffect(() => {
         if(socketConnection){
@@ -106,11 +108,11 @@ export default function Game() {
 
     const guessHandler = (e: any) =>{
         if(socketConnection){
-            const inputbox = document.getElementById('guess-input') as HTMLInputElement
+            // const inputbox = document.getElementById('guess-input') as HTMLInputElement
             socketConnection.send(JSON.stringify({
                 type: "player-guess",
                 roomid: roomid,
-                guess: Number(inputbox.value),
+                guess: Number(playerGuess),
                 username: username
             }))
 
@@ -140,18 +142,40 @@ export default function Game() {
 
         )
     }
-    return (
-        <section>
-            <div>
-                {players.map((player , index) => <div key={index}>{player.username}</div>)}
-            </div>
 
-            {turn && 
-                <div>
-                    <input placeholder="Enter your guess" type="number" id="guess-input"/>  
-                    <button onClick={(e) => guessHandler(e)}>Submit guess</button>
+
+    const generateNumbers = () => {
+        let arr= []
+        for (let index = 1; index <= 100; index++) {
+            arr.push(<Button 
+                id={`${index}`} 
+                variant="secondary" 
+                onClick={() => setPlayerGuess(index)} 
+                className={`${playerGuess == index? "bg-green-500 text-white": ""} cursor-pointer`}
+                key={index}>
+                    {index}
+            </Button>);
+        }
+        return arr;
+    }
+    return (
+        <section className="w-screen h-screen flex justify-center items-center">
+            <div className="min-w-1/2 min-h-3/4 flex border-white border-2 rounded">
+                <div className=" border-r-2 border-white min-w-1/4 gap-2 flex flex-col">
+                    {players.map((player , index) => 
+                        <div className="w-full border-2 border-white rounded p-3 text-center text-xl" key={index}>{player.username}</div>
+                    )}
                 </div>
-            }
+
+                <div className="w-full">
+                    {turn && 
+                        <div className="flex gap-2 flex-col justify-between h-full">
+                            <div className="grid gap-2 grid-cols-10">{generateNumbers()}</div>
+                            <Button className="bg-blue-500 w-full hover:bg-blue-600 cursor-pointer" onClick={(e) => guessHandler(e)}>Submit guess</Button>
+                        </div>
+                    }
+                </div>
+            </div>
         </section>
     )
 }

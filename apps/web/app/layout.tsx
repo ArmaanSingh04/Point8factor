@@ -1,7 +1,7 @@
 import SocketProvider from "./context/socket.context";
 import RoomContextProvider from "./context/room.context";
 import UsernameContextProvider from "./context/username.context";
-
+import { Toaster } from "@/components/ui/sonner"
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -32,6 +32,7 @@ export default function RootLayout({
           <RoomContextProvider>
             <UsernameContextProvider>
               {children}
+              <Toaster />
             </UsernameContextProvider>
           </RoomContextProvider>
         </SocketProvider>

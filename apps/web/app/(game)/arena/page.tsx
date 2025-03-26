@@ -4,6 +4,8 @@ import { RoomContext } from "../../context/room.context"
 import { UsernameContext } from "../../context/username.context"
 import { socketContext } from "../../context/socket.context"
 import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 
 export default function Arena() {
     const { roomid } = useContext(RoomContext)
@@ -14,7 +16,11 @@ export default function Arena() {
     const [message , setmessage] = useState("")
     const [chats , setChats] = useState<string[]>([])
     const [players , setPlayers] = useState<{username: string , host: boolean}[]>([])
-    console.log(players)
+    
+    const notifyPlayerJoined = (name: string) => {
+        toast(`Player joined ${name}`)
+    }
+
     useEffect(() => {
         if(!socketConnection){
             return router.push('/')
@@ -33,6 +39,7 @@ export default function Arena() {
                 setPlayers(response.players)
             }
             else if(response.type == "player-joined"){
+                notifyPlayerJoined(response.username)
                 setPlayers((prev) => [...prev , { username: response.username , host: response.host}])
             }
             else if(response.type == "game-has-begin"){
@@ -42,15 +49,9 @@ export default function Arena() {
 
     },[])
 
-    const sendMesage = () => {
-        if(socketConnection){
-            socketConnection.send(JSON.stringify({
-                type: "send-message",
-                message: message,
-                roomid
-            }))
-            setmessage("")
-        }
+    const handleCopy = async () => {
+        await navigator.clipboard.writeText(roomid)
+        toast("Copied to clipboard")
     }
 
     const startGame = () => {
@@ -63,18 +64,31 @@ export default function Arena() {
     }
 
     return(
-        <div>
-            <p>{roomid} for {username}</p>
-            <input type="text" onChange={(e) => setmessage(e.target.value)} value={message}/>
-            <button onClick={sendMesage}>Send message</button>
-            {players.map((player,index) => <div key={index}>{player.username}</div>)}
-            {
-                players.map((player , index) => {
-                    if(player.host && player.username == username){
-                        return <button key={index} onClick={startGame}>Start Game</button>
-                    }
-                })
-            }
+        <div className="w-screen h-screen flex justify-center items-center flex-col">
+            <div className="w-1/4 flex flex-col gap-2">
+                <div className="flex justify-center items-center">
+                    <p className=" w-full bg-white text-black rounded p-2">{roomid}</p>
+                    <Button onClick={handleCopy} className="bg-orange-600 cursor-pointer hover:bg-orange-700 h-full" variant="default">Copy</Button>
+                </div>
+                <div className="flex flex-col min-w-1/4 text-center gap-2">
+                    {players.map((player,index) => 
+                        <div className={`border-2 border-white p-3 text-2xl rounded ${player.host? `bg-green-200 text-black`: ``}`} key={index}>{player.username}{player.host? `(host)`: ""}{player.username == username? `(me)`: ""}</div>
+                    )}
+                </div>
+                <div>
+                {
+                    players.map((player , index) => {
+                        if(player.host && player.username == username){
+                            return <Button key={index} className="bg-blue-500 w-full cursor-pointer hover:bg-blue-600" onClick={startGame}>Start Game</Button>
+                        }
+                        else if(!player.host && player.username == username){
+                            return <Button key={index} className="bg-red-600 w-full hover:bg-red-600">Wait for Host to start the game !</Button>
+                        }
+                    })
+                }
+                
+                </div>
+            </div>
         </div>
     )
 }

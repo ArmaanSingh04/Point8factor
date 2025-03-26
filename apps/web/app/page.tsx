@@ -5,6 +5,9 @@ import { socketContext } from "./context/socket.context";
 import { useRouter } from "next/navigation";
 import { RoomContext } from "./context/room.context";
 import { UsernameContext } from "./context/username.context";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 export default function Home() {
   const { socketConnection, setSocketConnection } = useContext(socketContext)
@@ -40,6 +43,10 @@ export default function Home() {
 
   const createRoom = () => {
     if(socketConnection){
+      if(username === ""){
+        toast.error("Username cannot be empty")
+        return
+      }
       socketConnection.send(JSON.stringify({
         type: "create-room",
         username: username
@@ -49,6 +56,14 @@ export default function Home() {
 
   const joinRoom = () => {
     if(socketConnection){
+      if(username == ""){
+        toast.error("Username cannot be empty")
+        return;
+      }
+      if(inputId == ""){
+        toast.error("Enter roomid to join a room")
+        return;
+      }
       socketConnection.send(JSON.stringify({
         type: "join-room",
         roomid: inputId,
@@ -58,11 +73,13 @@ export default function Home() {
   }
 
   return (
-    <div>
-      <input type="text" placeholder="Enter a username" onChange={(e) => setUsername(e.target.value)} value={username}/>
-      <input type="text" placeholder="Enter room id to join" onChange={(e) => setInputId(e.target.value)} value={inputId}/>
-      <button onClick={joinRoom}>Join room</button>
-      <button onClick={createRoom}>Create room</button>
+    <div className="w-screen h-screen flex justify-center items-center flex-col">
+      <div className="flex flex-col w-1/4 h-1/2 gap-3 justify-center items-center">
+        <Input type="text" placeholder="Enter a username" onChange={(e) => setUsername(e.target.value)} value={username}/>
+        <Input type="text" placeholder="Enter room id to join" onChange={(e) => setInputId(e.target.value)} value={inputId}/>
+        <Button variant="secondary" className="cursor-pointer p-4 w-full"  onClick={joinRoom}>Join room</Button>
+        <Button className="bg-blue-400 p-4 cursor-pointer hover:bg-blue-500 w-full" onClick={createRoom}>Create room</Button>
+      </div>
     </div>
   );
 }
