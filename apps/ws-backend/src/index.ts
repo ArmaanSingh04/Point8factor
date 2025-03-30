@@ -8,6 +8,7 @@ import { getRoomPlayersHandler } from "./handlers/get-room-players";
 import { startGameHandler } from "./handlers/start-game";
 import { getTurnHandler } from "./handlers/get-turn";
 import { playerGuessHandler } from "./handlers/player-guess";
+import { getPlayerGuessHandler } from "./handlers/get-player-guess";
 
 const ws = new WebSocketServer({ port: 8000 })
 
@@ -25,6 +26,7 @@ ws.on("connection" , (ws) => {
         startGameHandler(ws , event)
         getTurnHandler(ws , event)
         playerGuessHandler(ws , event)
+        getPlayerGuessHandler(ws , event)
         
     })
 })

@@ -134,6 +134,7 @@ export const changeRound = (roomid: string) => {
                         winner: winner.username
                     }))
                 })
+                gameState.delete(roomid)
             }
             
             return

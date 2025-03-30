@@ -6,13 +6,10 @@ import { RoomContext } from "../../context/room.context"
 import { socketContext } from "../../context/socket.context"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-
-// interface playerState {
-//     roundresult: boolean
-// }
+import RoundChange from "../../components/RoundChange"
+import GameOver from "../../components/GameOver"
 
 export default function Game() {
-    console.log('re render')
     const { username } = useContext(UsernameContext)
     const { roomid } = useContext(RoomContext)
     const { socketConnection } = useContext(socketContext)
@@ -25,6 +22,7 @@ export default function Game() {
     const [winner , setwinner] = useState<string>()
     const [gameover , setGameOver] = useState<boolean>(false)
     const [playerGuess , setPlayerGuess] = useState<number>()
+    const [roundResults , setRoundResults] = useState<{username: string , guess: number}[]>([]);
 
     useEffect(() => {
         if(socketConnection){
@@ -55,28 +53,25 @@ export default function Game() {
                 //     }
                 // }
                 else if(response.type == "round-change"){
-                    // setRoundOver(true)
-                    // if(response.result == "winner"){
-                    //     setWinner(true)
-                    // }
-                    // else if(response.result == "not-a-winner"){
-                    //     setWinner(false)
-                    // }
-                    // setTimeout(() => {
-                    //     setRoundOver(false)
-                    //     setWinner(false)
-                    // }, 3000);
                     setRoundChange(true);
                     socketConnection.send(JSON.stringify({
                         type: "get-turn",
                         roomid: roomid,
                         username: username
                     }))
-
+                    socketConnection.send(JSON.stringify({
+                        type: "get-player-guess",
+                        roomid: roomid
+                    }))
                     setTimeout(() => {
                         setRoundChange(false)
-                    }, 3000);
+                        setRoundResults([])
+                    }, (roundResults.length*0.5 + 1 + 1 + 5) * 1000);
 
+                }
+                else if(response.type == "change-round" && response.result == "success") setRoundChange(false)
+                else if(response.type == "get-player-guess" && response.result == "success"){
+                    setRoundResults(response.data)
                 }
                 else if(response.type == "round-winner" && response.result == "success"){
                     setRoundWinner(response.username)
@@ -90,7 +85,7 @@ export default function Game() {
                         router.push("/")
                         setGameOver(false)
 
-                    }, 5000);
+                    }, 8000);
                 }
                 else if(response.type == "player-eliminated" && response.result == "success"){
                     console.log('player eliminated' , response.username)
@@ -125,22 +120,11 @@ export default function Game() {
     }
 
     if(gameover){
-        return(
-            <div>
-                Game over 
-                <h1>{winner} has won the game</h1>
-            </div>
-        )
+        return <GameOver winner={winner} />
     }
 
     if(roundChange === true){
-        return(
-            <div>
-                <p>Round is getting changed</p>
-                <p>{roundWinner} has won the round</p>
-            </div>
-
-        )
+        return <RoundChange results={roundResults} winner={roundWinner}/>
     }
 
 
@@ -169,7 +153,7 @@ export default function Game() {
 
                 <div className="w-full">
                     {turn && 
-                        <div className="flex gap-2 flex-col justify-between h-full">
+                        <div className="flex gap-2 flex-col p-3 justify-between h-full">
                             <div className="grid gap-2 grid-cols-10">{generateNumbers()}</div>
                             <Button className="bg-blue-500 w-full hover:bg-blue-600 cursor-pointer" onClick={(e) => guessHandler(e)}>Submit guess</Button>
                         </div>
