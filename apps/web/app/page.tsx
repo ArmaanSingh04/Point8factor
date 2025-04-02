@@ -18,6 +18,7 @@ export default function Home() {
   const { username, setUsername } = useContext(UsernameContext)
 
   const URL = process.env.NEXT_PUBLIC_WS_URL? `${process.env.NEXT_PUBLIC_WS_URL}` : "ws://localhost:8000"
+  console.log(URL)
 
   useEffect(() => {
     const newSocket = new WebSocket(URL)

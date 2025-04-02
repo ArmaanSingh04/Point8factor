@@ -2,6 +2,7 @@ name: Deploy next js to vps
 on:
     push:
         branches: [ prod ]
+        paths: ["apps/web/**"]
 jobs:
     build:
         runs-on: ubuntu-latest
