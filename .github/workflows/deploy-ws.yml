@@ -23,3 +23,15 @@ jobs:
                     file: ./docker/Dockerfile.ws
                     push: true
                     tags: techindustry/point8factor-ws:${{ github.sha }}
+            -
+                name: Deploy to the vps
+                uses: appleboy/ssh-action@v1.2.1
+                with:
+                    host: ${{ secrets.HOST }}
+                    username: root
+                    key: ${{ secrets.SSH_PRIVATE_KEY }}
+                    script: |
+                        docker pull techindustry/point8factor-ws:${{ github.sha }}
+                        docker stop point8factor-ws
+                        docker rm point8factor-ws
+                        docker run --name point8factor -d -p 8080:8000 techindustry/point8factor-ws:${{ github.sha }}
