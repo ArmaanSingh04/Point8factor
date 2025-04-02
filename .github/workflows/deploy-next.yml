@@ -1,0 +1,36 @@
+name: Deploy next js to vps
+on:
+    push:
+        branches: [ prod ]
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+          -
+            name: checkout code
+            uses: actions/checkout@v2
+          -
+            name: Docker login
+            uses: docker/login-action@v2
+            with:
+              username: ${{ secrets.DOCKERHUB_USERNAME }}
+              password: ${{ secrets.DOCKERHUB_TOKEN }}
+          -
+            name: Build and push
+            uses: docker/build-push-action@v4
+            with:
+              file: ./docker/Dockerfile.web
+              push: true
+              tags: techindustry/point8factor-web:${{ github.sha }}
+          -
+            name: Deploy to the vps
+            uses: appleboy/ssh-action@v1.2.1
+            with:
+              host: ${{ secrets.HOST }}
+              username: root
+              key: ${{ secrets.SSH_PRIVATE_KEY }}
+              script: |
+                docker pull techindustry/point8factor-web:${{ github.sha }}
+                docker stop point8factor-web
+                docker rm point8factor-web
+                docker run --name point8factor-web -d -p 5000:3000 techindustry/point8factor-web:${{ github.sha }}

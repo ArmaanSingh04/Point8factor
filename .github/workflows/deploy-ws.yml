@@ -2,6 +2,7 @@ name: Deployment of websocket to vps
 on:
     push:
         branches: [ prod ]
+        paths: ["apps/ws-backend/**"]
 jobs:
     build:
         runs-on: ubuntu-latest

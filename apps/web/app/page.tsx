@@ -17,10 +17,10 @@ export default function Home() {
   const { setRoomId } = useContext(RoomContext)
   const { username, setUsername } = useContext(UsernameContext)
 
-
+  const URL = process.env.NEXT_PUBLIC_WS_URL? `${process.env.NEXT_PUBLIC_WS_URL}` : "ws://localhost:8000"
 
   useEffect(() => {
-    const newSocket = new WebSocket("ws://localhost:8000")
+    const newSocket = new WebSocket(URL)
 
     newSocket.onopen = () => {
       console.log('Connection with the websocket established')
