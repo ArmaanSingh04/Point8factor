@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import RoundChange from "../../components/RoundChange"
 import GameOver from "../../components/GameOver"
+import { toast } from "sonner"
 
 export default function Game() {
     const { username } = useContext(UsernameContext)
@@ -24,12 +25,18 @@ export default function Game() {
     const [playerGuess , setPlayerGuess] = useState<number>()
     const [roundResults , setRoundResults] = useState<{username: string , guess: number}[]>([]);
 
-    useEffect(() => {
+    const getPlayers = () => {
         if(socketConnection){
             socketConnection.send(JSON.stringify({
-                type: "get-room-players",
+                type: "get-game-players",
                 roomid: roomid
             }))
+        }
+    }
+
+    useEffect(() => {
+        if(socketConnection){
+            getPlayers()
             socketConnection.send(JSON.stringify({
                 type: "get-turn",
                 roomid: roomid,
@@ -38,7 +45,7 @@ export default function Game() {
             socketConnection.onmessage = (message) => {
                 const response = JSON.parse(message.data);
 
-                if(response.type == "get-room-players"){
+                if(response.type == "get-game-players"){
                     setPlayers(response.players)
                 }
                 else if(response.type == "round-change"){
@@ -85,8 +92,21 @@ export default function Game() {
                 else if(response.type == "get-turn"){
                     setTurn(response.result)
                 }
+                else if(response.type == "player-left-from-game"){
+                    console.log('player left received')
+                    toast(`Player left ${response.username}`)
+                    getPlayers()
+                    
+                }
             }
-
+            window.onbeforeunload = function () {
+                socketConnection.send(JSON.stringify({
+                    type: "leave-game",
+                    username: username,
+                    roomid: roomid
+                }))
+                socketConnection.close()
+            }
         }
     }, [])
 

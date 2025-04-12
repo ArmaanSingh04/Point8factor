@@ -30,9 +30,3 @@ export const leaveRoomHandler = (ws:WebSocket , event: any) => {
         }
     }
 }
-
-export const leaveGameHandler = (ws: WebSocket , event:any) => {
-    if(event.type == "leave-game"){
-        
-    }
-}

@@ -1,5 +1,5 @@
 import WebSocket from "ws"
-import { rooms } from "../state"
+import { gameState, rooms } from "../state"
 
 export const getRoomPlayersHandler = (ws: WebSocket , event: any) => {
     // requires [type , roomid]
@@ -12,6 +12,21 @@ export const getRoomPlayersHandler = (ws: WebSocket , event: any) => {
             
             ws.send(JSON.stringify({
                 type: "get-room-players",
+                result: "success",
+                players: players
+            }))
+        }
+    }
+}
+
+export const getGamePlayersHandler = (ws: WebSocket , event: any) => {
+    if(event.type == "get-game-players"){
+        const existingGame = gameState.get(event.roomid)
+
+        if(existingGame){
+            const players = existingGame.players.map((player) => ({ username: player.username }))
+            ws.send(JSON.stringify({
+                type: "get-game-players",
                 result: "success",
                 players: players
             }))
