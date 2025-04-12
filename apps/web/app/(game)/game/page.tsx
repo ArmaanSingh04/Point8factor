@@ -41,17 +41,6 @@ export default function Game() {
                 if(response.type == "get-room-players"){
                     setPlayers(response.players)
                 }
-                // else if (response.type == "whos-turn"){
-                //     console.log(response)
-                //     if(response.result == "your-turn"){
-                //         console.log('setting turn to true');
-                //         setTurn(true)
-                //     }
-                //     else if (response.result == "not-your-turn"){
-                //         console.log('setting turn to false')
-                //         setTurn(false)
-                //     }
-                // }
                 else if(response.type == "round-change"){
                     setRoundChange(true);
                     socketConnection.send(JSON.stringify({

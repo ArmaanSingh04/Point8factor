@@ -2,7 +2,7 @@
 import { useContext, useEffect, useState } from "react"
 import { RoomContext } from "../../context/room.context"
 import { UsernameContext } from "../../context/username.context"
-import { socketContext } from "../../context/socket.context"
+import SocketProvider, { socketContext } from "../../context/socket.context"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
@@ -21,14 +21,20 @@ export default function Arena() {
         toast(`Player joined ${name}`)
     }
 
+    const getPlayers = () => {
+        if(socketConnection){
+            socketConnection.send(JSON.stringify({
+                type: "get-room-players",
+                roomid: roomid
+            }))
+        }
+    }
     useEffect(() => {
+
         if(!socketConnection){
             return router.push('/')
         }
-        socketConnection.send(JSON.stringify({
-            type: "get-room-players",
-            roomid: roomid
-        }))
+        getPlayers()
         socketConnection.onmessage = (message) => {
             const response = JSON.parse(message.data)
 
@@ -42,11 +48,27 @@ export default function Arena() {
                 notifyPlayerJoined(response.username)
                 setPlayers((prev) => [...prev , { username: response.username , host: response.host}])
             }
+            else if(response.type == "player-left"){
+                toast(`Player left ${response.username}`)
+                getPlayers()
+            }
             else if(response.type == "game-has-begin"){
                 router.push('/game')
             }
         }
 
+        window.onbeforeunload = function () {
+            socketConnection.send(JSON.stringify({
+                type: "leave-room",
+                username: username,
+                roomid: roomid
+            }))
+            socketConnection.close()
+        }
+    
+        // return () => {
+        //     document.removeEventListener("beforeunload", handleDisconnect);
+        // };
     },[])
 
     const handleCopy = async () => {

@@ -1,12 +1,15 @@
-import { InitialRoomState, rooms } from "../state"
+import { gameState, InitialRoomState, rooms } from "../state"
 import WebSocket from "ws"
 
 export const joinRoomHandler = (ws: WebSocket, event: any) => {
     // requires [type , username , roomid]
     if (event.type == "join-room") {
         const existingroom = rooms.get(event.roomid)
+        const roomStarted = gameState.get(event.roomid)
 
-        if (existingroom) {
+        console.log(roomStarted)
+
+        if (existingroom && roomStarted == undefined) {
 
             existingroom.forEach((player) => {
                 player.conn.send(JSON.stringify({
@@ -27,6 +30,11 @@ export const joinRoomHandler = (ws: WebSocket, event: any) => {
                 type: event.type,
                 result: "success",
                 roomid: `${event.roomid}`
+            }))
+        }
+        else if(roomStarted){
+            ws.send(JSON.stringify({
+                type: "room-already-started"
             }))
         }
     }

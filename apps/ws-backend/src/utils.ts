@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from "uuid"
 import { gameState, Player, rooms } from "./state"
+import WebSocket from "ws"
 
 export const generateRandomWord = (): string => {
     return uuidv4().replace(/-/g, "").substring(0,8)
@@ -148,4 +149,22 @@ export const changeRound = (roomid: string) => {
         })
         existingRoom.round += 1;
     }
+}
+
+export function leftPlayer(ws: WebSocket){
+    gameState.forEach((room) => {
+        room.players.forEach((player) => {
+            if(player.conn == ws){
+                // left player
+                // announce room player has left
+                room.players = room.players.filter((player) => player.conn != ws)
+                
+                room.players.forEach((player) => {
+                    player.conn.send(JSON.stringify({
+                        type: "player-left"
+                    }))
+                })
+            }
+        })
+    })
 }

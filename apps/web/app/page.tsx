@@ -38,6 +38,9 @@ export default function Home() {
         setRoomId(response.roomid)
         router.push('/arena')
       }
+      else if(response.type == "room-already-started"){
+        toast(`Room has already started`)
+      }
     }
     setSocketConnection(newSocket)
   } , [])
