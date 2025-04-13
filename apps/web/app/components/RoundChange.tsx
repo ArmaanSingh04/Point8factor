@@ -3,30 +3,32 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
-export default function RoundChange(props: { results: { username: string; guess: number }[]; winner: string | undefined }) {
-    const [visiblePlayers, setVisiblePlayers] = useState<{ username: string; guess: number }[]>([]);
+export default function RoundChange(props: {
+    results: { username: string; guess: number }[];
+    winner: string | undefined;
+}) {
+    const [visibleIndexes, setVisibleIndexes] = useState<number[]>([]);
     const [showTotal, setShowTotal] = useState(false);
     const [showWinner, setShowWinner] = useState(false);
 
     useEffect(() => {
-        setVisiblePlayers([]);
+        setVisibleIndexes([]);
         setShowTotal(false);
         setShowWinner(false);
 
-        props.results.forEach((player, index) => {
+        props.results.forEach((_, index) => {
             setTimeout(() => {
-                setVisiblePlayers((prev) => [...prev, player]);
-            }, index * 500);
+                setVisibleIndexes((prev) => [...prev, index]);
+            }, index * 1000); // 1-second delay between each player
         });
-
 
         setTimeout(() => {
             setShowTotal(true);
-        }, (props.results.length * 0.5 + 1) * 1000);
+        }, props.results.length * 1000 + 5000); // show total 1s after all players
 
         setTimeout(() => {
             setShowWinner(true);
-        }, props.results.length * 500 + 1500);
+        }, props.results.length * 1000 + 8000); // show winner 1.5s after total
     }, [props.results]);
 
     const getTotal = (): number => {
@@ -34,44 +36,47 @@ export default function RoundChange(props: { results: { username: string; guess:
     };
 
     return (
-        <div className="w-screen h-screen flex flex-col justify-center items-center gap-6 bg-gray-900 text-white">
+        <div className="w-screen h-screen flex flex-col justify-center items-center gap-10 bg-gray-900 text-white p-4">
             <h1 className="text-4xl font-bold text-yellow-400">Round Over</h1>
 
-            <div className="flex border border-white flex-col min-w-1/4 p-4 rounded-lg shadow-lg bg-gray-800">
-                {visiblePlayers.map((player, index) => (
+            {/* Players' guesses */}
+            <div className="flex flex-wrap justify-center gap-6">
+                {props.results.map((player, index) => (
                     <motion.div
                         key={index}
-                        className="text-2xl p-3 border-b border-gray-600 last:border-none"
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: index * 0.5 }}
+                        className="border border-white rounded px-6 py-4 min-w-[200px] text-center"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: visibleIndexes.includes(index) ? 1 : 0 }}
+                        transition={{ duration: 0.5 }}
                     >
-                        {player.username} - <span className="text-green-400">{player.guess}</span>
+                        <p className="text-xl font-semibold">{player.username}</p>
+                        <p className="text-green-400 text-2xl mt-2">{player.guess}</p>
                     </motion.div>
                 ))}
             </div>
 
-            {showTotal && (
-                <motion.p
-                    className="text-2xl bg-blue-600 px-4 py-2 rounded-md shadow-md"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5 , delay: 1}}
-                >
-                    Total: <span className="font-bold">{`${getTotal()} * 0.8 = ${Math.floor((getTotal() / props.results.length) * 0.8)}`}</span>
-                </motion.p>
-            )}
+            {/* Total Calculation */}
+            <motion.div
+                className="text-2xl bg-blue-600 px-6 py-3 rounded mt-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: showTotal ? 1 : 0 }}
+                transition={{ duration: 0.5 }}
+            >
+                Total:{" "}
+                <span className="font-bold">{`${getTotal()} * 0.8 = ${Math.floor(
+                    (getTotal() / props.results.length) * 0.8
+                )}`}</span>
+            </motion.div>
 
-            {showWinner && (
-                <motion.div
-                    className="text-3xl text-white font-bold bg-green-500 px-6 py-3 rounded-lg shadow-lg"
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5, delay: 0.5 }}
-                >
-                    🎉 Winner: {props.winner} 🎉
-                </motion.div>
-            )}
+            {/* Winner */}
+            <motion.div
+                className="text-3xl text-white font-bold bg-green-500 px-8 py-4 rounded mt-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: showWinner ? 1 : 0 }}
+                transition={{ duration: 0.5 }}
+            >
+                🎉 Winner: {props.winner} 🎉
+            </motion.div>
         </div>
     );
 }

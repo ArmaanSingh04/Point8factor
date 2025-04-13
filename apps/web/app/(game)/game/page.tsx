@@ -14,7 +14,7 @@ export default function Game() {
     const { username } = useContext(UsernameContext)
     const { roomid } = useContext(RoomContext)
     const { socketConnection } = useContext(socketContext)
-    const [ players , setPlayers ] = useState<{username: string}[]>([])
+    const [ players , setPlayers ] = useState<{username: string , turn:boolean , score:number , eliminated: boolean}[]>([])
     const router = useRouter()
 
     const [ turn , setTurn ] = useState<boolean>(false)
@@ -62,7 +62,7 @@ export default function Game() {
                     setTimeout(() => {
                         setRoundChange(false)
                         setRoundResults([])
-                    }, (roundResults.length*0.5 + 1 + 1 + 5) * 1000);
+                    }, (roundResults.length*0.5 + 2.5 + 5.5 + 10) * 1000);
 
                 }
                 else if(response.type == "change-round" && response.result == "success") setRoundChange(false)
@@ -85,6 +85,7 @@ export default function Game() {
                 }
                 else if(response.type == "player-eliminated" && response.result == "success"){
                     console.log('player eliminated' , response.username)
+                    getPlayers()
                 }
                 else if(response.type == "player-guess" && response.result == "success"){
                     setTurn(false)
@@ -96,7 +97,9 @@ export default function Game() {
                     console.log('player left received')
                     toast(`Player left ${response.username}`)
                     getPlayers()
-                    
+                }
+                else if(response.type == "a-player-submit"){
+                    getPlayers()
                 }
             }
             window.onbeforeunload = function () {
@@ -152,11 +155,19 @@ export default function Game() {
         return arr;
     }
     return (
-        <section className="w-screen h-screen flex justify-center items-center">
+        <section className="w-screen h-screen flex justify-center items-center flex-col">
+            <div className="min-w-1/2 flex justify-end">
+                {players.map((player , index) => {
+                    if(player.username == username){
+                        return <div className="text-2xl" key={index}>{player.score} / {players.length}</div>
+                    }
+                }
+                )}
+            </div>
             <div className="min-w-1/2 min-h-3/4 flex border-white border-2 rounded">
                 <div className=" border-r-2 border-white min-w-1/4 gap-2 flex flex-col">
                     {players.map((player , index) => 
-                        <div className="w-full border-2 border-white rounded p-3 text-center text-xl" key={index}>{player.username}</div>
+                        <div className={`w-full border-2 border-white ${(player.turn == false && player.eliminated == false)?"bg-green-500":""} ${(player.turn == false && player.eliminated == true)? "bg-red-500" : ""} rounded p-3 text-center text-xl`} key={index}>{player.username}</div>
                     )}
                 </div>
 
@@ -167,6 +178,21 @@ export default function Game() {
                             <Button className="bg-blue-500 w-full hover:bg-blue-600 cursor-pointer" onClick={(e) => guessHandler(e)}>Submit guess</Button>
                         </div>
                     }
+
+                {players.map((player , index) => {
+                    if(player.username == username && player.turn == false && player.eliminated == false){
+                        return <div className="flex p-3 justify-center items-center h-full" key={index}>
+                                <p className="flex bg-amber-700 text-white p-5 rounded">Let other Players Guess </p>
+                            </div>
+                    }
+                    else if(player.username == username && player.turn ==false && player.eliminated == true){
+                        return <div className="flex p-3 justify-center items-center h-full" key={index}>
+                                <p className="flex bg-red-500 text-white p-5 rounded">You have been eliminated </p>
+                                </div>
+                    }
+                }
+                )}
+
                 </div>
             </div>
         </section>

@@ -24,7 +24,7 @@ export const getGamePlayersHandler = (ws: WebSocket , event: any) => {
         const existingGame = gameState.get(event.roomid)
 
         if(existingGame){
-            const players = existingGame.players.map((player) => ({ username: player.username }))
+            const players = existingGame.players.map((player) => ({ username: player.username , turn: player.turn , score:player.score  , eliminated: player.eliminated}))
             ws.send(JSON.stringify({
                 type: "get-game-players",
                 result: "success",

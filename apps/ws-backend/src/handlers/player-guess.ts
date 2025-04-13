@@ -19,7 +19,11 @@ export const playerGuessHandler = (ws: WebSocket , event: any) => {
                         result: "success"
                     }))
 
-                    
+                    existingRoom.players.forEach((player) => {
+                        player.conn.send(JSON.stringify({
+                            type: "a-player-submit"
+                        }))
+                    })
                 }
             })
 

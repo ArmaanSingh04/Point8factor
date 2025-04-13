@@ -77,8 +77,9 @@ const checkElimination = (roomid: string) => {
 
     if(existingRoom) {
         existingRoom.players.forEach((player) => {
-            if(player.score == existingRoom.members ){
+            if(player.score >= existingRoom.members ){
                 // player is eliminated
+                player.turn = false;
                 player.eliminated = true;
                 // announce everyone that this player is eliminated
                 console.log("player eliminated" , player.username)
