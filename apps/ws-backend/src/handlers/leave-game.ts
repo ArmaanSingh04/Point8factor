@@ -15,7 +15,8 @@ export const leaveGameHandler = (ws: WebSocket , event: any) => {
                 round: existingRoom.round,
                 players: newArray,
                 members: existingRoom.members,
-                eliminatedPlayers: existingRoom.eliminatedPlayers
+                eliminatedPlayers: existingRoom.eliminatedPlayers,
+                chat: existingRoom.chat
             }
             if(newArray.length == 0) gameState.delete(roomid)
             else gameState.set(roomid , newObject);

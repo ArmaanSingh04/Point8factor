@@ -9,11 +9,17 @@ export interface Player {
     eliminated: boolean,
     turn: boolean
 }
+export interface Chat {
+    id: number,
+    username: string,
+    message: string
+}
 export interface RoomStats {
     round: number,
     members: number,
     players: Player[],
     eliminatedPlayers: Player[]
+    chat: Chat[]
 }
 
 export interface InitialRoomState {

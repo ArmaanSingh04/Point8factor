@@ -169,3 +169,19 @@ export function leftPlayer(ws: WebSocket){
         })
     })
 }
+
+export const getRoomMembers = (ws: WebSocket , event: any) => {
+    const roomid = event.roomid;
+    if(event.type == "get-room-members"){
+        const existingRoom = gameState.get(roomid)
+
+        if(existingRoom){
+            const members = existingRoom.members
+            ws.send(JSON.stringify({
+                type: "room-members",
+                result: "success",
+                data: members
+            }))
+        }
+    }
+}

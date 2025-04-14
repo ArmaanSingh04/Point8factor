@@ -9,12 +9,14 @@ import { Button } from "@/components/ui/button"
 import RoundChange from "../../components/RoundChange"
 import GameOver from "../../components/GameOver"
 import { toast } from "sonner"
+import { Input } from "@/components/ui/input"
 
 export default function Game() {
     const { username } = useContext(UsernameContext)
     const { roomid } = useContext(RoomContext)
     const { socketConnection } = useContext(socketContext)
     const [ players , setPlayers ] = useState<{username: string , turn:boolean , score:number , eliminated: boolean}[]>([])
+    const [members , setMembers] = useState<number>();
     const router = useRouter()
 
     const [ turn , setTurn ] = useState<boolean>(false)
@@ -24,6 +26,8 @@ export default function Game() {
     const [gameover , setGameOver] = useState<boolean>(false)
     const [playerGuess , setPlayerGuess] = useState<number>()
     const [roundResults , setRoundResults] = useState<{username: string , guess: number}[]>([]);
+    const [message , setMessage] = useState<string>("")
+    const [chat , setChat] = useState<{id: number , username: string , message: string}[]>([])
 
     const getPlayers = () => {
         if(socketConnection){
@@ -34,6 +38,33 @@ export default function Game() {
         }
     }
 
+    const getRoomMembers = () => {
+        if(socketConnection){
+            socketConnection.send(JSON.stringify({
+                type: "get-room-members",
+                roomid: roomid
+            }))
+        }
+    }
+    
+    const getChat = () => {
+        if(socketConnection){
+            socketConnection.send(JSON.stringify({
+                type: "get-room-chat",
+                roomid
+            }))
+        }
+    }
+    const notificationAudio = new Audio("/assets/notification.mp3")
+    const playMessageSound = () => {
+        if(notificationAudio){
+            notificationAudio.play().catch((e) => {
+                console.error("Error playing sound:", e);
+            });
+        }
+        
+    }
+
     useEffect(() => {
         if(socketConnection){
             getPlayers()
@@ -42,6 +73,7 @@ export default function Game() {
                 roomid: roomid,
                 username: username
             }))
+            getRoomMembers()
             socketConnection.onmessage = (message) => {
                 const response = JSON.parse(message.data);
 
@@ -97,9 +129,20 @@ export default function Game() {
                     console.log('player left received')
                     toast(`Player left ${response.username}`)
                     getPlayers()
+                    getRoomMembers()
                 }
                 else if(response.type == "a-player-submit"){
                     getPlayers()
+                }
+                else if(response.type == "room-members"){
+                    setMembers(response.data)
+                }
+                else if(response.type == "new-chat"){
+                    playMessageSound()
+                    getChat()
+                }
+                else if(response.type == "room-chat"){
+                    setChat(response.data)
                 }
             }
             window.onbeforeunload = function () {
@@ -154,47 +197,81 @@ export default function Game() {
         }
         return arr;
     }
+
+    const submitMessage = () => {
+        if(socketConnection){
+            socketConnection.send(JSON.stringify({
+                type: "post-room-chat",
+                roomid,
+                username,
+                message
+            }))
+            setMessage("")
+        }
+    }
     return (
-        <section className="w-screen h-screen flex justify-center items-center flex-col">
-            <div className="min-w-1/2 flex justify-end">
-                {players.map((player , index) => {
-                    if(player.username == username){
-                        return <div className="text-2xl" key={index}>{player.score} / {players.length}</div>
+        <section className="w-screen h-screen flex justify-center items-center gap-4">
+            <div className="h-full flex flex-col justify-center min-w-1/2">
+                <div className="min-w-1/2 flex justify-end">
+                    {players.map((player , index) => {
+                        if(player.username == username){
+                            return <div className="text-2xl" key={index}>{player.score} / {members}</div>
+                        }
                     }
-                }
-                )}
-            </div>
-            <div className="min-w-1/2 min-h-3/4 flex border-white border-2 rounded">
-                <div className=" border-r-2 border-white min-w-1/4 gap-2 flex flex-col">
-                    {players.map((player , index) => 
-                        <div className={`w-full border-2 border-white ${(player.turn == false && player.eliminated == false)?"bg-green-500":""} ${(player.turn == false && player.eliminated == true)? "bg-red-500" : ""} rounded p-3 text-center text-xl`} key={index}>{player.username}</div>
                     )}
                 </div>
+                <div className="min-w-1/2 min-h-3/4 flex border-white border-2 rounded">
+                    <div className=" border-r-2 border-white min-w-1/4 gap-2 flex flex-col">
+                        {players.map((player , index) => 
+                            <div className={`w-full border-2 border-white ${(player.turn == false && player.eliminated == false)?"bg-green-500":""} ${(player.turn == false && player.eliminated == true)? "bg-red-500" : ""} rounded p-3 text-center text-xl`} key={index}>{player.username}</div>
+                        )}
+                    </div>
 
-                <div className="w-full">
-                    {turn && 
-                        <div className="flex gap-2 flex-col p-3 justify-between h-full">
-                            <div className="grid gap-2 grid-cols-10">{generateNumbers()}</div>
-                            <Button className="bg-blue-500 w-full hover:bg-blue-600 cursor-pointer" onClick={(e) => guessHandler(e)}>Submit guess</Button>
-                        </div>
-                    }
-
-                {players.map((player , index) => {
-                    if(player.username == username && player.turn == false && player.eliminated == false){
-                        return <div className="flex p-3 justify-center items-center h-full" key={index}>
-                                <p className="flex bg-amber-700 text-white p-5 rounded">Let other Players Guess </p>
+                    <div className="w-full">
+                        {turn && 
+                            <div className="flex gap-2 flex-col p-3 justify-between h-full">
+                                <div className="grid gap-2 grid-cols-10">{generateNumbers()}</div>
+                                <Button className="bg-blue-500 w-full hover:bg-blue-600 cursor-pointer" onClick={(e) => guessHandler(e)}>Submit guess</Button>
                             </div>
-                    }
-                    else if(player.username == username && player.turn ==false && player.eliminated == true){
-                        return <div className="flex p-3 justify-center items-center h-full" key={index}>
-                                <p className="flex bg-red-500 text-white p-5 rounded">You have been eliminated </p>
-                                </div>
-                    }
-                }
-                )}
+                        }
 
+                    {players.map((player , index) => {
+                        if(player.username == username && player.turn == false && player.eliminated == false){
+                            return <div className="flex p-3 justify-center items-center h-full" key={index}>
+                                    <p className="flex bg-amber-700 text-white p-5 rounded">Let other Players Guess </p>
+                                </div>
+                        }
+                        else if(player.username == username && player.turn ==false && player.eliminated == true){
+                            return <div className="flex p-3 justify-center items-center h-full" key={index}>
+                                    <p className="flex bg-red-500 text-white p-5 rounded">You have been eliminated </p>
+                                    </div>
+                        }
+                    }
+                    )}
+
+                    </div>
                 </div>
             </div>
+
+            <div className="h-full flex flex-col justify-center w-1/4">
+                
+                <div>
+                    <p className="text-2xl">Chat here !</p>
+                </div>
+                
+                <div className="h-3/4 border-2 border-white rounded p-2 flex flex-col justify-between">
+                    <div>
+                        {chat.map((temp) => (<p key={temp.id} className="border-b-2 border-white  p-2">{temp.username} : {temp.message}</p>))}
+
+                    </div>
+                    <div className="flex">
+                        <Input placeholder="Enter your message" value={message} onChange={e => setMessage(e.target.value)}/>
+                        <Button className="bg-blue-500" onClick={submitMessage}>Send</Button>
+                    </div>
+                </div>
+
+            </div>
+            
         </section>
     )
 }

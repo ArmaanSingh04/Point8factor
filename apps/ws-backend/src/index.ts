@@ -1,5 +1,5 @@
 import WebSocket , { WebSocketServer } from "ws";
-import { generateRandomWord, leftPlayer } from "./utils";
+import { generateRandomWord, getRoomMembers, leftPlayer } from "./utils";
 // import { gameHandler, StartGame } from "./game";
 import { rooms } from "./state";
 import { createRoomHandler } from "./handlers/create-room";
@@ -11,6 +11,7 @@ import { playerGuessHandler } from "./handlers/player-guess";
 import { getPlayerGuessHandler } from "./handlers/get-player-guess";
 import { leaveRoomHandler } from "./handlers/leave-room";
 import { leaveGameHandler } from "./handlers/leave-game";
+import { getRoomChat, postRoomChat } from "./handlers/room-chat";
 
 const ws = new WebSocketServer({ port: 8000 })
 
@@ -32,6 +33,9 @@ ws.on("connection" , (ws) => {
         getPlayerGuessHandler(ws , event)
         leaveRoomHandler(ws , event)
         leaveGameHandler(ws , event)
+        getRoomMembers(ws , event)
+        getRoomChat(ws , event)
+        postRoomChat(ws , event)
     })
     ws.on("close" , (ws) => {
         // this is working fine printing a id idk why

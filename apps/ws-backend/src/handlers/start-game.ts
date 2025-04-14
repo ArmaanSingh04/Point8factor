@@ -22,7 +22,8 @@ export const startGameHandler = (ws: WebSocket, event: any) => {
                 round: 0,
                 members: arr.length,
                 players: arr,
-                eliminatedPlayers: []
+                eliminatedPlayers: [],
+                chat: []
             }
 
             gameState.set(event.roomid , roomStats)
