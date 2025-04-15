@@ -1,6 +1,6 @@
 "use client"
 
-import { useContext, useEffect, useState } from "react"
+import { useContext, useEffect, useRef, useState } from "react"
 import { UsernameContext } from "../../context/username.context"
 import { RoomContext } from "../../context/room.context"
 import { socketContext } from "../../context/socket.context"
@@ -55,17 +55,35 @@ export default function Game() {
             }))
         }
     }
-    const notificationAudio = new Audio("/assets/notification.mp3")
-    const playMessageSound = () => {
-        if(notificationAudio){
-            notificationAudio.play().catch((e) => {
-                console.error("Error playing sound:", e);
-            });
-        }
-        
-    }
+    
+    const chatEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
+        if (chatEndRef.current) {
+            chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [chat]);
+
+    useEffect(() => {
+        const notificationAudio = new Audio("/assets/notification.mp3")
+        const submitNotificationAudio = new Audio("/assets/submitnotification.mp3")
+
+        const playMessageSound = () => {
+            if(notificationAudio){
+                notificationAudio.play().catch((e) => {
+                    console.error("Error playing sound:", e);
+                });
+            }
+            
+        }
+        const playSubmitNotificationSound = () => {
+            if(submitNotificationAudio) {
+                submitNotificationAudio.play().catch((e) => {
+                    console.error("Error playing sound:", e);
+                });
+            }
+        }
+
         if(socketConnection){
             getPlayers()
             socketConnection.send(JSON.stringify({
@@ -132,6 +150,7 @@ export default function Game() {
                     getRoomMembers()
                 }
                 else if(response.type == "a-player-submit"){
+                    playSubmitNotificationSound()
                     getPlayers()
                 }
                 else if(response.type == "room-members"){
@@ -209,6 +228,8 @@ export default function Game() {
             setMessage("")
         }
     }
+
+    
     return (
         <section className="w-screen h-screen flex justify-center items-center gap-4">
             <div className="h-full flex flex-col justify-center min-w-1/2">
@@ -223,7 +244,7 @@ export default function Game() {
                 <div className="min-w-1/2 min-h-3/4 flex border-white border-2 rounded">
                     <div className=" border-r-2 border-white min-w-1/4 gap-2 flex flex-col">
                         {players.map((player , index) => 
-                            <div className={`w-full border-2 border-white ${(player.turn == false && player.eliminated == false)?"bg-green-500":""} ${(player.turn == false && player.eliminated == true)? "bg-red-500" : ""} rounded p-3 text-center text-xl`} key={index}>{player.username}</div>
+                            <div className={`w-full border-2 border-white ${(player.turn == false && player.eliminated == false)?"bg-green-500":""} ${(player.turn == false && player.eliminated == true)? "bg-red-500" : ""} rounded p-3 text-center text-xl`} key={index}>{player.username} {player.score}/{members}</div>
                         )}
                     </div>
 
@@ -260,9 +281,9 @@ export default function Game() {
                 </div>
                 
                 <div className="h-3/4 border-2 border-white rounded p-2 flex flex-col justify-between">
-                    <div>
+                    <div className="overflow-y-auto overflow-x-hidden">
                         {chat.map((temp) => (<p key={temp.id} className="border-b-2 border-white  p-2">{temp.username} : {temp.message}</p>))}
-
+                        <div ref={chatEndRef} />
                     </div>
                     <div className="flex">
                         <Input placeholder="Enter your message" value={message} onChange={e => setMessage(e.target.value)}/>
