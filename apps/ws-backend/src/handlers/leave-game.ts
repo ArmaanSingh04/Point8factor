@@ -29,7 +29,6 @@ export const leaveGameHandler = (ws: WebSocket , event: any) => {
                 }))
             })
 
-            console.log(gameState)
         }
     }
 }

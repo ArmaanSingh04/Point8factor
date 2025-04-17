@@ -7,8 +7,6 @@ export const joinRoomHandler = (ws: WebSocket, event: any) => {
         const existingroom = rooms.get(event.roomid)
         const roomStarted = gameState.get(event.roomid)
 
-        console.log(roomStarted)
-
         if (existingroom && roomStarted == undefined) {
 
             existingroom.forEach((player) => {

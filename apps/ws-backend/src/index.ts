@@ -1,7 +1,7 @@
-import WebSocket , { WebSocketServer } from "ws";
+import WebSocket, { WebSocketServer } from "ws";
 import { generateRandomWord, getRoomMembers, leftPlayer } from "./utils";
 // import { gameHandler, StartGame } from "./game";
-import { rooms } from "./state";
+import { appAnalytics, rooms } from "./state";
 import { createRoomHandler } from "./handlers/create-room";
 import { joinRoomHandler } from "./handlers/join-room";
 import { getGamePlayersHandler, getRoomPlayersHandler } from "./handlers/get-room-players";
@@ -12,32 +12,46 @@ import { getPlayerGuessHandler } from "./handlers/get-player-guess";
 import { leaveRoomHandler } from "./handlers/leave-room";
 import { leaveGameHandler } from "./handlers/leave-game";
 import { getRoomChat, postRoomChat } from "./handlers/room-chat";
+import { createdRoomAnalytics } from "./handlers/analytics";
 
 const ws = new WebSocketServer({ port: 8000 })
 
-ws.on("listening" , () => {
+ws.on("listening", () => {
     console.log(`Websocket server ready at port 8000`)
 })
 
-ws.on("connection" , (ws) => {
-    ws.on("message" , (data) => {
-        const event = JSON.parse(data.toString()) 
+ws.on("connection", (ws) => {
+    appAnalytics.players += 1;
+    ws.on("message", (data) => {
         
-        createRoomHandler(ws , event)
-        joinRoomHandler(ws , event)
-        getRoomPlayersHandler(ws , event)
-        getGamePlayersHandler(ws , event)
-        startGameHandler(ws , event)
-        getTurnHandler(ws , event)
-        playerGuessHandler(ws , event)
-        getPlayerGuessHandler(ws , event)
-        leaveRoomHandler(ws , event)
-        leaveGameHandler(ws , event)
-        getRoomMembers(ws , event)
-        getRoomChat(ws , event)
-        postRoomChat(ws , event)
+        const event = (() => {
+            try {
+                return JSON.parse(data.toString());
+            } catch {
+                console.error("Error parsing the event");
+                return null;
+            }
+        })();
+
+        if (!event) return;
+
+        createRoomHandler(ws, event)
+        joinRoomHandler(ws, event)
+        getRoomPlayersHandler(ws, event)
+        getGamePlayersHandler(ws, event)
+        startGameHandler(ws, event)
+        getTurnHandler(ws, event)
+        playerGuessHandler(ws, event)
+        getPlayerGuessHandler(ws, event)
+        leaveRoomHandler(ws, event)
+        leaveGameHandler(ws, event)
+        getRoomMembers(ws, event)
+        getRoomChat(ws, event)
+        postRoomChat(ws, event)
+
+        createdRoomAnalytics(ws, event)
     })
-    ws.on("close" , (ws) => {
+    ws.on("close", (ws) => {
         // this is working fine printing a id idk why
     })
 })

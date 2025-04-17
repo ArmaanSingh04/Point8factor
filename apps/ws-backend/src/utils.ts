@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid"
-import { gameState, Player, rooms } from "./state"
+import { appAnalytics, gameState, Player, rooms } from "./state"
 import WebSocket from "ws"
 
 export const generateRandomWord = (): string => {
@@ -10,7 +10,6 @@ export const everyoneGuessed = (roomid: string): boolean => {
     const existingRoom = gameState.get(roomid)
 
     if(existingRoom){
-        //console.log(existingRoom.players)
 
         for (let i = 0; i < existingRoom.players.length; i++) {
             if (existingRoom.players[i]?.turn === true) {
@@ -57,7 +56,6 @@ const calculateScore = (roomid: string) => {
                     player.score += 1;
                 }
             })
-            console.log('round-winner' , winner.username)
             existingRoom.players.forEach((player) => {
                 player.conn.send(JSON.stringify({
                     type: "round-winner",
@@ -82,7 +80,6 @@ const checkElimination = (roomid: string) => {
                 player.turn = false;
                 player.eliminated = true;
                 // announce everyone that this player is eliminated
-                console.log("player eliminated" , player.username)
                 existingRoom.players.forEach((temp) => {
                     temp.conn.send(JSON.stringify({
                         type: "player-eliminated",
@@ -108,7 +105,6 @@ export const checkGameOver = (roomid: string): boolean => {
         })
         if(countNotEliminated < 2){
             // game is over announce the winner
-            console.log('game over')
             return true;
         }
     }
@@ -128,6 +124,7 @@ export const changeRound = (roomid: string) => {
             
             const winner = existingRoom.players.find((player) => player.eliminated == false)
             if(winner){
+                appAnalytics.endedgames += 1;
                 existingRoom.players.forEach((player) => {
                     player.turn = false
                     player.conn.send(JSON.stringify({

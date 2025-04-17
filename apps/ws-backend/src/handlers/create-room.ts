@@ -1,5 +1,5 @@
 import WebSocket from "ws"
-import { InitialRoomState, rooms } from "../state"
+import { appAnalytics, InitialRoomState, rooms } from "../state"
 import { generateRandomWord } from "../utils"
 
 export const createRoomHandler = (ws: WebSocket, event: any) => {
@@ -16,6 +16,7 @@ export const createRoomHandler = (ws: WebSocket, event: any) => {
         }
 
         rooms.set(roomid , [obj])
+        appAnalytics.rooms += 1;
 
         ws.send(JSON.stringify({
             type: event.type,

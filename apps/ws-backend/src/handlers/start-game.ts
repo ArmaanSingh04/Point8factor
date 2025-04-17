@@ -1,5 +1,5 @@
 import { WebSocket } from "ws";
-import { gameState, Player, rooms, RoomStats } from "../state";
+import { appAnalytics, gameState, Player, rooms, RoomStats } from "../state";
 
 export const startGameHandler = (ws: WebSocket, event: any) => {
     // requires [type , roomid]
@@ -27,9 +27,8 @@ export const startGameHandler = (ws: WebSocket, event: any) => {
             }
 
             gameState.set(event.roomid , roomStats)
-
-            // console.log(gameState.get(event.roomid))
-
+            appAnalytics.startedgames += 1;
+            
             // announce everyone game has started
             existingRoom.forEach((player) => {
                 player.conn.send(JSON.stringify({

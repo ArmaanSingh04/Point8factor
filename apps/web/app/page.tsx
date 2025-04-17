@@ -11,14 +11,13 @@ import { toast } from "sonner";
 
 export default function Home() {
   const { socketConnection, setSocketConnection } = useContext(socketContext)
-  const [inputId , setInputId] = useState("")
+  const [inputId, setInputId] = useState("")
   const router = useRouter()
-  
+
   const { setRoomId } = useContext(RoomContext)
   const { username, setUsername } = useContext(UsernameContext)
 
-  const URL = process.env.NEXT_PUBLIC_WS_URL? `${process.env.NEXT_PUBLIC_WS_URL}` : "ws://localhost:8000"
-  console.log(URL)
+  const URL = process.env.NEXT_PUBLIC_WS_URL ? `${process.env.NEXT_PUBLIC_WS_URL}` : "ws://localhost:8000"
 
   useEffect(() => {
     const newSocket = new WebSocket(URL)
@@ -27,27 +26,26 @@ export default function Home() {
       console.log('Connection with the websocket established')
     }
 
-    newSocket.onmessage = (message:any) => {
+    newSocket.onmessage = (message: any) => {
       const response = JSON.parse(message.data)
-      console.log(response)
-      if(response.type == "create-room"  && response.result == "success"){
+      if (response.type == "create-room" && response.result == "success") {
         setRoomId(response.roomid)
         router.push('/arena')
       }
-      else if(response.type == "join-room"  && response.result == "success"){
+      else if (response.type == "join-room" && response.result == "success") {
         setRoomId(response.roomid)
         router.push('/arena')
       }
-      else if(response.type == "room-already-started"){
+      else if (response.type == "room-already-started") {
         toast(`Room has already started`)
       }
     }
     setSocketConnection(newSocket)
-  } , [])
+  }, [])
 
   const createRoom = () => {
-    if(socketConnection){
-      if(username === ""){
+    if (socketConnection) {
+      if (username === "") {
         toast.error("Username cannot be empty")
         return
       }
@@ -59,12 +57,12 @@ export default function Home() {
   }
 
   const joinRoom = () => {
-    if(socketConnection){
-      if(username == ""){
+    if (socketConnection) {
+      if (username == "") {
         toast.error("Username cannot be empty")
         return;
       }
-      if(inputId == ""){
+      if (inputId == "") {
         toast.error("Enter roomid to join a room")
         return;
       }
@@ -77,12 +75,35 @@ export default function Home() {
   }
 
   return (
-    <div className="w-screen h-screen flex justify-center items-center flex-col">
-      <div className="flex flex-col w-1/4 h-1/2 gap-3 justify-center items-center">
-        <Input type="text" placeholder="Enter a username" onChange={(e) => setUsername(e.target.value)} value={username}/>
-        <Input type="text" placeholder="Enter room id to join" onChange={(e) => setInputId(e.target.value)} value={inputId}/>
-        <Button variant="secondary" className="cursor-pointer p-4 w-full"  onClick={joinRoom}>Join room</Button>
-        <Button className="bg-blue-400 p-4 cursor-pointer hover:bg-blue-500 w-full" onClick={createRoom}>Create room</Button>
+    <div className="w-screen h-screen flex justify-center items-center px-4">
+      <div className="flex flex-col w-full max-w-md gap-4 justify-center items-center">
+        <Input
+          type="text"
+          placeholder="Enter a username"
+          onChange={(e) => setUsername(e.target.value)}
+          value={username}
+          className="w-full"
+        />
+        <Input
+          type="text"
+          placeholder="Enter room id to join"
+          onChange={(e) => setInputId(e.target.value)}
+          value={inputId}
+          className="w-full"
+        />
+        <Button
+          variant="secondary"
+          className="cursor-pointer p-4 w-full"
+          onClick={joinRoom}
+        >
+          Join room
+        </Button>
+        <Button
+          className="bg-blue-400 p-4 cursor-pointer hover:bg-blue-500 w-full"
+          onClick={createRoom}
+        >
+          Create room
+        </Button>
       </div>
     </div>
   );

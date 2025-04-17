@@ -27,8 +27,6 @@ export const playerGuessHandler = (ws: WebSocket , event: any) => {
                 }
             })
 
-            //console.log('everyone guessed ? ' , everyoneGuessed(event.roomid))
-
             if(everyoneGuessed(event.roomid)){
                 changeRound(event.roomid)
                 // announce everyone round has changed   

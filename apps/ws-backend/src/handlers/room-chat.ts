@@ -1,5 +1,5 @@
 import { WebSocket } from "ws";
-import { gameState } from "../state";
+import { appAnalytics, gameState } from "../state";
 
 export const getRoomChat = (ws: WebSocket , event: any) => {
     const roomid = event.roomid;
@@ -36,6 +36,7 @@ export const postRoomChat = (ws: WebSocket , event: any) => {
             })
 
             // announce everyone a new message has been posted
+            appAnalytics.messages += 1;
             existingRoom.players.forEach((player) => {
                 player.conn.send(JSON.stringify({
                     type: "new-chat",
