@@ -12,7 +12,7 @@ import { getPlayerGuessHandler } from "./handlers/get-player-guess";
 import { leaveRoomHandler } from "./handlers/leave-room";
 import { leaveGameHandler } from "./handlers/leave-game";
 import { getRoomChat, postRoomChat } from "./handlers/room-chat";
-import { createdRoomAnalytics } from "./handlers/analytics";
+import { getAnalytics } from "./handlers/analytics";
 
 const ws = new WebSocketServer({ port: 8000 })
 
@@ -49,7 +49,7 @@ ws.on("connection", (ws) => {
         getRoomChat(ws, event)
         postRoomChat(ws, event)
 
-        createdRoomAnalytics(ws, event)
+        getAnalytics(ws, event)
     })
     ws.on("close", (ws) => {
         // this is working fine printing a id idk why
